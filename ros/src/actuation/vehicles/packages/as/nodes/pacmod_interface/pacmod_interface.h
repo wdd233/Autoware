@@ -101,6 +101,7 @@ private:
   double brake_kp_, brake_ki_, brake_kd_;
   double accel_max_, brake_max_;
   double brake_deadband_;
+  double rotation_rate_;
 
   // variables
   bool engage_cmd_, prev_engage_cmd_;

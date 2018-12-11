@@ -42,16 +42,17 @@ PacmodInterface::PacmodInterface()
   , clear_faults_(false)
   , init_vehicle_cmd_(false)
 {
-  private_nh_.param<double>("loop_rate", loop_rate_, 50.0);
-  private_nh_.param<double>("accel_kp", accel_kp_, 0.0);
-  private_nh_.param<double>("accel_ki", accel_ki_, 0.0);
+  private_nh_.param<double>("loop_rate", loop_rate_, 100.0);
+  private_nh_.param<double>("accel_kp", accel_kp_, 0.2);
+  private_nh_.param<double>("accel_ki", accel_ki_, 0.1);
   private_nh_.param<double>("accel_kd", accel_kd_, 0.0);
-  private_nh_.param<double>("accel_max", accel_max_, 0.0);
-  private_nh_.param<double>("brake_kp", brake_kp_, 0.0);
-  private_nh_.param<double>("brake_ki", brake_ki_, 0.0);
+  private_nh_.param<double>("accel_max", accel_max_, 0.3);
+  private_nh_.param<double>("brake_kp", brake_kp_, 0.1);
+  private_nh_.param<double>("brake_ki", brake_ki_, 0.1);
   private_nh_.param<double>("brake_kd", brake_kd_, 0.0);
-  private_nh_.param<double>("brake_max", brake_max_, 0.0);
-  private_nh_.param<double>("brake_deadband", brake_deadband_, 0.0);
+  private_nh_.param<double>("brake_max", brake_max_, 0.5);
+  private_nh_.param<double>("brake_deadband", brake_deadband_, 1.39);
+  private_nh_.param<double>("rotation_rate", rotation_rate_, 6.0);
 
   rate_ = new ros::Rate(loop_rate_);
 
@@ -131,11 +132,13 @@ void PacmodInterface::publishPacmodSteer(const autoware_msgs::VehicleCmd& msg)
   steer.clear_override = clear_override_;
   steer.clear_faults = clear_faults_;
 
-  steer.command = msg.ctrl_cmd.steering_angle;
+  steer.command = msg.ctrl_cmd.steering_angle * 10.0;
   // TODO, default max = 3.3, 4.71239 is fast but jerky
-  steer.rotation_rate = 3.0;
+  steer.rotation_rate = rotation_rate_;
 
   pacmod_steer_pub_.publish(steer);
+
+  ROS_INFO("STEER: target = %f, command = %f", msg.ctrl_cmd.steering_angle, steer.command);
 }
 
 void PacmodInterface::publishPacmodAccel(const autoware_msgs::VehicleCmd& msg)
@@ -150,14 +153,19 @@ void PacmodInterface::publishPacmodAccel(const autoware_msgs::VehicleCmd& msg)
   accel.clear_faults = clear_faults_;
 
   error = msg.ctrl_cmd.linear_velocity - current_speed_;
-  if (error >= 0) {
-    accel.command = accel_pid_.update(error, 1.0/loop_rate_);
-  } else {
+  if (error >= 0)
+  {
+    accel.command = accel_pid_.update(error, 1.0 / loop_rate_);
+  }
+  else
+  {
     accel_pid_.reset();
     accel.command = 0.0;
   }
 
   pacmod_accel_pub_.publish(accel);
+
+  ROS_INFO("ACCEL: target = %f, actual = %f, error = %f, command = %f", msg.ctrl_cmd.linear_velocity, current_speed_, error, accel.command);
 }
 
 void PacmodInterface::publishPacmodBrake(const autoware_msgs::VehicleCmd& msg)
@@ -172,14 +180,19 @@ void PacmodInterface::publishPacmodBrake(const autoware_msgs::VehicleCmd& msg)
   brake.clear_faults = clear_faults_;
 
   error = msg.ctrl_cmd.linear_velocity - current_speed_;
-  if (error < -brake_deadband_) {
-    brake.command = brake_pid_.update(error, 1.0/loop_rate_);
-  } else {
+  if (error < -brake_deadband_)
+  {
+    brake.command = brake_pid_.update(-error, 1.0 / loop_rate_);
+  }
+  else
+  {
     brake_pid_.reset();
     brake.command = 0.0;
   }
 
   pacmod_brake_pub_.publish(brake);
+
+  ROS_INFO("BRAKE: target = %f, actual = %f, error = %f, command = %f", msg.ctrl_cmd.linear_velocity, current_speed_, error, brake.command);
 }
 
 void PacmodInterface::publishPacmodShift(const autoware_msgs::VehicleCmd& msg)

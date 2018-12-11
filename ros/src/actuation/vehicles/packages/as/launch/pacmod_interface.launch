@@ -6,16 +6,17 @@
   <arg name="kvaser_circuit_id" default="0" />
   <arg name="pacmod_vehicle_type" default="LEXUS_RX_450H" />
 
-  <arg name="loop_rate" default="50.0" />
-  <arg name="accel_kp" default="0.1" />
-  <arg name="accel_ki" default="0.0" />
+  <arg name="loop_rate" default="100.0" />
+  <arg name="accel_kp" default="0.2" />
+  <arg name="accel_ki" default="0.1" />
   <arg name="accel_kd" default="0.0" />
   <arg name="accel_max" default="0.3" />
   <arg name="brake_kp" default="0.1" />
-  <arg name="brake_ki" default="0.0" />
+  <arg name="brake_ki" default="0.1" />
   <arg name="brake_kd" default="0.0" />
-  <arg name="brake_max" default="0.2" />
+  <arg name="brake_max" default="0.5" />
   <arg name="brake_deadband" default="1.39" />
+  <arg name="rotation_rate" default="6.0" />
 
   <group ns="pacmod" if="$(arg use_pacmod)">
     <include file="$(find pacmod3)/launch/pacmod3.launch">
@@ -37,6 +38,7 @@
     <param name="brake_kd" value="$(arg brake_kd)" />
     <param name="brake_max" value="$(arg brake_max)" />
     <param name="brake_deadband" value="$(arg brake_deadband)" />
+    <param name="rotation_rate" value="$(arg rotation_rate)" />
 	</node>
 
 </launch>
