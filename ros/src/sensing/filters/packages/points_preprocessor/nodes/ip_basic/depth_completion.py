@@ -16,6 +16,7 @@ FULL_KERNEL_3 = np.ones((3, 3), np.uint8)
 FULL_KERNEL_5 = np.ones((5, 5), np.uint8)
 FULL_KERNEL_7 = np.ones((7, 7), np.uint8)
 FULL_KERNEL_9 = np.ones((9, 9), np.uint8)
+FULL_KERNEL_11 = np.ones((11, 11), np.uint8)
 FULL_KERNEL_31 = np.ones((31, 31), np.uint8)
 
 # 3x3 cross kernel
@@ -70,23 +71,116 @@ DIAMOND_KERNEL_7 = np.asarray(
         [0, 0, 0, 1, 0, 0, 0],
     ], dtype=np.uint8)
 
+# 9x9 cross kernel
+CROSS_KERNEL_9 = np.asarray(
+    [
+        [0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0, 0, 0],
+    ], dtype=np.uint8)
+
+# 9x9 diamond kernel
+DIAMOND_KERNEL_9 = np.asarray(
+    [
+        [0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 1, 1, 1, 0, 0, 0],
+        [0, 0, 1, 1, 1, 1, 1, 0, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 0],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [0, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 0, 1, 1, 1, 1, 1, 0, 0],
+        [0, 0, 0, 1, 1, 1, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0, 0, 0],
+    ], dtype=np.uint8)
+
+# 9x9 diamond kernel
+THICK_DIAMOND_KERNEL_9 = np.asarray(
+    [
+        [0, 0, 0, 1, 1, 1, 0, 0, 0],
+        [0, 0, 1, 1, 1, 1, 1, 0, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 0],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [0, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 0, 1, 1, 1, 1, 1, 0, 0],
+        [0, 0, 0, 1, 1, 1, 0, 0, 0],
+    ], dtype=np.uint8)
+
+# 9x9 cross kernel
+CROSS_KERNEL_11 = np.asarray(
+    [
+        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+    ], dtype=np.uint8)
+
+# 9x9 diamond kernel
+DIAMOND_KERNEL_11 = np.asarray(
+    [
+        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+        [0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0],
+        [0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+        [0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+    ], dtype=np.uint8)
+
+# 9x9 diamond kernel
+THICK_DIAMOND_KERNEL_11 = np.asarray(
+    [
+        [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+        [0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0],
+        [0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+        [0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+    ], dtype=np.uint8)
+
+BILATERAL_BLUR = 5
+# BILATERAL_BLUR = 9
+
 class DepthCompleter:
     def __init__(self):
         self.__APP_NAME__ = "depth_completer"
         self._image_pub = rospy.Publisher("/points_depth", Image, queue_size=10)
 
         self._cv_bridge = CvBridge()
-        self._image_sub = rospy.Subscriber("/camera0_rotated/image_cloud",Image, self._callback, queue_size=10)
+        self._image_sub = rospy.Subscriber("/image_cloud",Image, self._callback, queue_size=10)
 
         # Fast fill with Gaussian blur @90Hz (paper result)
-        self.fill_type = 'fast'
-        self.extrapolate = True
-        self.blur_type = 'gaussian'
+        # self.fill_type = 'fast'
+        # self.extrapolate = False
+        # self.blur_type = 'gaussian'
 
         # Fast Fill with bilateral blur, no extrapolation @87Hz (recommended)
-        #self.fill_type = 'fast'
-        #self.extrapolate = False
-        #self.blur_type = 'bilateral'
+        # self.fill_type = 'fast'
+        # self.extrapolate = False
+        # self.blur_type = 'bilateral'
 
         # Multi-scale dilations with extra noise removal, no extrapolation @ 30Hz
         self.fill_type = 'multiscale'
@@ -118,7 +212,7 @@ class DepthCompleter:
         except CvBridgeError as e:
             print(e)
 
-    def fill_in_fast(self, depth_map, max_depth=100.0, custom_kernel=DIAMOND_KERNEL_5,
+    def fill_in_fast(self, depth_map, max_depth=100.0, custom_kernel=FULL_KERNEL_11,
                      extrapolate=False, blur_type='bilateral'):
         """Fast, in-place depth completion.
 
@@ -171,7 +265,7 @@ class DepthCompleter:
         # Bilateral or Gaussian blur
         if blur_type == 'bilateral':
             # Bilateral blur
-            depth_map = cv2.bilateralFilter(depth_map, 5, 1.5, 2.0)
+            depth_map = cv2.bilateralFilter(depth_map, BILATERAL_BLUR, 1.5, 2.0)
         elif blur_type == 'gaussian':
             # Gaussian blur
             valid_pixels = (depth_map > 0.1)
@@ -308,7 +402,7 @@ class DepthCompleter:
             s7_blurred_depths[valid_pixels] = blurred[valid_pixels]
         elif blur_type == 'bilateral':
             # Bilateral blur
-            blurred = cv2.bilateralFilter(s7_blurred_depths, 5, 0.5, 2.0)
+            blurred = cv2.bilateralFilter(s7_blurred_depths, BILATERAL_BLUR, 0.5, 2.0)
             s7_blurred_depths[valid_pixels] = blurred[valid_pixels]
 
         # Invert (and offset)
