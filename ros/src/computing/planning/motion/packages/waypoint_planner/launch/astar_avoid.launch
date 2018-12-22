@@ -11,7 +11,7 @@
   <arg name="avoid_start_velocity" default="3.0" />
   <arg name="replan_interval" default="2.0" />
   <arg name="search_waypoints_size" default="50" />
-  <arg name="search_waypoints_delta" default="2" />
+  <arg name="search_waypoints_delta" default="5" />
 
   <!-- A* search configurations -->
   <arg name="use_back" default="false" />
