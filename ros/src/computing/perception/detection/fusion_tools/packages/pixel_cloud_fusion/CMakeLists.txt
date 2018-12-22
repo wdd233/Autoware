@@ -18,6 +18,8 @@ find_package(OpenMP)
 
 find_package(Eigen3 QUIET)
 
+find_package(CUDA)
+
 if (NOT EIGEN3_FOUND)
     # Fallback to cmake_modules
     find_package(cmake_modules REQUIRED)
@@ -41,10 +43,28 @@ catkin_package(CATKIN_DEPENDS
 set(CMAKE_CXX_FLAGS "-O3 -g -Wall ${CMAKE_CXX_FLAGS}")
 
 #fusion Library
-add_library(pixel_cloud_fusion_lib SHARED
-        src/pixel_cloud_fusion.cpp
-        include/pixel_cloud_fusion/pixel_cloud_fusion.h
-        )
+if (CUDA_FOUND)
+  list(APPEND CUDA_NVCC_FLAGS "-std=c++11")
+  add_definitions(-DCUDA_FOUND) # Enable cuda modules
+  include_directories(
+    ${OpenCV_INCLUDE_DIR}
+    ${catkin_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIRS}
+    ${PCL_INCLUDE_DIRS}
+    include)
+  cuda_add_library(pixel_cloud_fusion_lib
+    include/pixel_cloud_fusion/pixel_cloud_fusion.h
+    include/pixel_cloud_fusion/pixel_cloud_fusion_gpu.hpp
+    src/pixel_cloud_fusion.cpp
+    src/pixel_cloud_fusion_gpu.cu
+    SHARED
+    )
+else(CUDA_FOUND)
+  add_library(pixel_cloud_fusion_lib SHARED
+    src/pixel_cloud_fusion.cpp
+    include/pixel_cloud_fusion/pixel_cloud_fusion.h
+    )
+endif(CUDA_FOUND)
 
 if (OPENMP_FOUND)
     set_target_properties(pixel_cloud_fusion_lib PROPERTIES
@@ -53,13 +73,18 @@ if (OPENMP_FOUND)
             )
 endif ()
 
-target_include_directories(pixel_cloud_fusion_lib PRIVATE
-        ${OpenCV_INCLUDE_DIR}
-        ${catkin_INCLUDE_DIRS}
-        ${Boost_INCLUDE_DIRS}
-        ${PCL_INCLUDE_DIRS}
-        include
-        )
+if (CUDA_FOUND)
+  # 'target_include_directories' may cause compilation problem
+  # when it used with 'cuda_add_library'
+else(CUDA_FOUND)
+  target_include_directories(pixel_cloud_fusion_lib PRIVATE
+    ${OpenCV_INCLUDE_DIR}
+    ${catkin_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIRS}
+    ${PCL_INCLUDE_DIRS}
+    include
+    )
+endif(CUDA_FOUND)
 
 target_link_libraries(pixel_cloud_fusion_lib
         ${OpenCV_LIBRARIES}
@@ -73,9 +98,15 @@ add_dependencies(pixel_cloud_fusion_lib
         )
 
 #Fusion node
-add_executable(pixel_cloud_fusion
-        src/pixel_cloud_fusion_node.cpp
-        )
+if(CUDA_FOUND)
+  cuda_add_executable(pixel_cloud_fusion
+    src/pixel_cloud_fusion_node.cpp
+    )
+else(CUDA_FOUND)
+  add_executable(pixel_cloud_fusion
+    src/pixel_cloud_fusion_node.cpp
+    )
+endif(CUDA_FOUND)
 target_include_directories(pixel_cloud_fusion PRIVATE
         ${OpenCV_INCLUDE_DIR}
         ${catkin_INCLUDE_DIRS}

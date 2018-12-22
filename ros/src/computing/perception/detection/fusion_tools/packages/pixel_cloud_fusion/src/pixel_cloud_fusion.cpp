@@ -89,45 +89,59 @@ void ROSPixelCloudFusionApp::CloudCallback(const sensor_msgs::PointCloud2::Const
 	pcl::fromROSMsg(*in_cloud_msg, *in_cloud);
 	std::unordered_map<cv::Point, pcl::PointXYZ> projection_map;
 
-	std::vector<pcl::PointXYZ> cam_cloud(in_cloud->points.size());
-	for (size_t i = 0; i < in_cloud->points.size(); i++)
-	{
-		cam_cloud[i] = TransformPoint(in_cloud->points[i], camera_lidar_tf_);
-		int u = int(cam_cloud[i].x * fx_ / cam_cloud[i].z + cx_);
-		int v = int(cam_cloud[i].y * fy_ / cam_cloud[i].z + cy_);
-		if ((u >= 0) && (u < image_size_.width)
-			&& (v >= 0) && (v < image_size_.height)
-			&& cam_cloud[i].z > 0
-				)
-		{
-			projection_map.insert(std::pair<cv::Point, pcl::PointXYZ>(cv::Point(u, v), in_cloud->points[i]));
-		}
-	}
+	if (use_gpu_) {
+#ifdef CUDA_FOUND
+		pixel_cloud_fusion_gpu_->Fusion(in_cloud,
+						current_frame_,
+						camera_lidar_tf_,
+						fx_,
+						fy_,
+						cx_,
+						cy_,
+						out_cloud);
+#endif  // CUDA_FOUND
+	} else {
+		std::vector<pcl::PointXYZ> cam_cloud(in_cloud->points.size());
+		for (size_t i = 0; i < in_cloud->points.size(); i++)
+			{
+				cam_cloud[i] = TransformPoint(in_cloud->points[i], camera_lidar_tf_);
+				int u = int(cam_cloud[i].x * fx_ / cam_cloud[i].z + cx_);
+				int v = int(cam_cloud[i].y * fy_ / cam_cloud[i].z + cy_);
+				if ((u >= 0) && (u < image_size_.width)
+				    && (v >= 0) && (v < image_size_.height)
+				    && cam_cloud[i].z > 0
+				    )
+					{
+						projection_map.insert(std::pair<cv::Point, pcl::PointXYZ>(cv::Point(u, v), in_cloud->points[i]));
+					}
+			}
 
-	out_cloud->points.clear();
+		out_cloud->points.clear();
 
 #pragma omp for
-	for (int row = 0; row < image_size_.height; row++)
-	{
-		for (int col = 0; col < image_size_.width; col++)
-		{
-			std::unordered_map<cv::Point, pcl::PointXYZ>::const_iterator iterator_3d_2d;
-			pcl::PointXYZ corresponding_3d_point;
-			pcl::PointXYZRGB colored_3d_point;
-			iterator_3d_2d = projection_map.find(cv::Point(col, row));
-			if (iterator_3d_2d != projection_map.end())
+		for (int row = 0; row < image_size_.height; row++)
 			{
-				corresponding_3d_point = iterator_3d_2d->second;
-				cv::Vec3b rgb_pixel = current_frame_.at<cv::Vec3b>(row, col);
-				colored_3d_point.x = corresponding_3d_point.x;
-				colored_3d_point.y = corresponding_3d_point.y;
-				colored_3d_point.z = corresponding_3d_point.z;
-				colored_3d_point.r = rgb_pixel[2];
-				colored_3d_point.g = rgb_pixel[1];
-				colored_3d_point.b = rgb_pixel[0];
-				out_cloud->points.push_back(colored_3d_point);
+				for (int col = 0; col < image_size_.width; col++)
+					{
+						std::unordered_map<cv::Point, pcl::PointXYZ>::const_iterator iterator_3d_2d;
+						pcl::PointXYZ corresponding_3d_point;
+						pcl::PointXYZRGB colored_3d_point;
+						iterator_3d_2d = projection_map.find(cv::Point(col, row));
+						if (iterator_3d_2d != projection_map.end())
+							{
+								corresponding_3d_point = iterator_3d_2d->second;
+								cv::Vec3b rgb_pixel = current_frame_.at<cv::Vec3b>(row, col);
+								colored_3d_point.x = corresponding_3d_point.x;
+								colored_3d_point.y = corresponding_3d_point.y;
+								colored_3d_point.z = corresponding_3d_point.z;
+								colored_3d_point.r = rgb_pixel[2];
+								colored_3d_point.g = rgb_pixel[1];
+								colored_3d_point.b = rgb_pixel[0];
+								out_cloud->points.push_back(colored_3d_point);
+							}
+					}
 			}
-		}
+
 	}
 	// Publish PC
 	sensor_msgs::PointCloud2 cloud_msg;
@@ -201,6 +215,14 @@ void ROSPixelCloudFusionApp::InitializeROSIo(ros::NodeHandle &in_private_handle)
 
 	in_private_handle.param<std::string>("camera_info_src", camera_info_src, "/camera_info");
 	ROS_INFO("[%s] camera_info_src: %s", __APP_NAME__, camera_info_src.c_str());
+
+	in_private_handle.param<bool>("use_gpu", use_gpu_, true);
+	ROS_INFO("[%s] use_gpu: %s", __APP_NAME__, (use_gpu_) ? "true" : "false");
+	if (use_gpu_) {
+#ifdef CUDA_FOUND
+		pixel_cloud_fusion_gpu_.reset(new PixelCloudFusionGPU());
+#endif  // CUDA_FOUND
+	}
 
 	if (name_space_str != "/")
 	{

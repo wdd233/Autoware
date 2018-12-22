@@ -43,6 +43,7 @@
 #include <vector>
 #include <unordered_map>
 #include <chrono>
+#include <memory>
 
 #include <ros/ros.h>
 #include <tf/tf.h>
@@ -70,6 +71,10 @@
 #include <opencv2/calib3d/calib3d.hpp>
 
 #include <Eigen/Eigen>
+
+#ifdef CUDA_FOUND
+#include "pixel_cloud_fusion/pixel_cloud_fusion_gpu.hpp"
+#endif	// CUDA_FOUND
 
 namespace std {
 	template <>
@@ -111,6 +116,11 @@ class ROSPixelCloudFusionApp
 	ros::Subscriber                     cloud_subscriber_;
 	ros::Subscriber                     image_subscriber_;
 	message_filters::Synchronizer<SyncPolicyT>              *cloud_synchronizer_;
+
+	bool                                use_gpu_;
+#ifdef CUDA_FOUND
+	std::unique_ptr<PixelCloudFusionGPU> pixel_cloud_fusion_gpu_;
+#endif  // CUDA_FOUND
 
 	pcl::PointXYZ TransformPoint(const pcl::PointXYZ &in_point, const tf::StampedTransform &in_transform);
 
