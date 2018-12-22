@@ -26,21 +26,18 @@
  *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
  *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- ********************/
+ ********************
+ */
 
-#include "waypoints2costmap.h"
+#include "costmap_generator.h"
 
-
-// Constructor
-Waypoints2Costmap::Waypoints2Costmap()
+int main(int argc, char** argv)
 {
-}
+  ros::init(argc, argv, "costmap_generator");
+  CostmapGenerator costmap_generator;
+  costmap_generator.init();
+  costmap_generator.run();
+  ros::spin();
 
-Waypoints2Costmap::~Waypoints2Costmap() {}
-
-grid_map::Matrix Waypoints2Costmap::makeCostmapFromWaypoints(const grid_map::GridMap& costmap,
-                                                              const std::string& gridmap_layer_name,
-                                                              const autoware_msgs::LaneArray::ConstPtr& in_waypoints)
-{
-  return costmap[gridmap_layer_name];
+  return 0;
 }
