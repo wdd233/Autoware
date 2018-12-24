@@ -32,7 +32,7 @@ find_package(Qt5Core REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(PCL 1.7 REQUIRED)
 find_package(OpenMP)
-find_package(CUDA REQUIRED)
+find_package(CUDA QUIET)
 
 # Resolve system dependency on yaml-cpp, which apparently does not
 # provide a CMake find_package() module.
