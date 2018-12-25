@@ -1,0 +1,16 @@
+- git:
+    local-name: ros/src/msgs/platform_automation_msgs
+    uri: https://github.com/astuff/platform_automation_msgs.git
+    version: master
+- git:
+    local-name: ros/src/sensing/drivers/lidar/packages/robosense
+    uri: https://github.com/CPFL/robosense.git
+    version: master
+- git:
+    local-name: ros/src/msgs/lgsvl_msgs
+    uri: https://github.com/lgsvl/lgsvl_msgs.git
+    version: master
+- git:
+    local-name: ros/src/sensing/drivers/lidar/packages/ouster
+    uri: https://github.com/CPFL/ouster.git
+    version: master
