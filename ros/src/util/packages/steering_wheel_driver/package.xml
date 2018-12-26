@@ -12,12 +12,15 @@
   <build_depend>autoware_msgs</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>pluginlib</build_depend>
+  <build_depend>libhidapi-dev</build_depend>
   <build_export_depend>autoware_msgs</build_export_depend>
   <build_export_depend>roscpp</build_export_depend>
   <build_export_depend>pluginlib</build_export_depend>
+  <build_export_depend>libhidapi-dev</build_export_depend>
   <exec_depend>autoware_msgs</exec_depend>
   <exec_depend>roscpp</exec_depend>
   <exec_depend>pluginlib</exec_depend>
+  <exec_depend>libhidapi-dev</exec_depend>
 
   <export>
     <steering_wheel_driver plugin="${prefix}/plugins.xml" />

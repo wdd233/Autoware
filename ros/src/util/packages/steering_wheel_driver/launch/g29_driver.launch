@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
 <launch>
-    <node pkg="steering_wheel_driver" type="steering_wheel_driver_node" name="steering_wheel_driver_node" output="log" respawn="false" respawn_delay="0">
+    <node pkg="steering_wheel_driver" type="g29_driver_node" name="steering_wheel_driver_node" output="screen" respawn="false" respawn_delay="0">
     </node>
 </launch>
