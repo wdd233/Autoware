@@ -16,9 +16,13 @@
 
 //heaers in hidapi
 #include <hidapi/hidapi.h>
+#include <linux/hidraw.h>
 
 //headers in boost
 #include <boost/optional.hpp>
+
+//headers in STL
+#include <codecvt> 
 
 class G29Driver
 {

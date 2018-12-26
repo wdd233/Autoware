@@ -1,5 +1,7 @@
 #include <steering_wheel_driver/g29_driver.h>
 
+#define BUFFER 255
+
 G29Driver::G29Driver(ros::NodeHandle nh, ros::NodeHandle pnh) {
   nh_ = nh;
   pnh_ = pnh;
@@ -71,19 +73,50 @@ void G29Driver::addForce(double target_force){
   return;
 }
 
+// initial setup of the G29
 void G29Driver::setup() {
+  // setup SDL for reading joystick angle
   if (SDL_Init(SDL_INIT_JOYSTICK) < 0){
     ROS_ERROR_STREAM("Error initializing SDL!");
     std::exit(0);
   }
   joy_=SDL_JoystickOpen(joystick_id_);
-  if (joy_) {
-    ROS_INFO_STREAM("connect to " << SDL_JoystickNameForIndex(0));
-  }
-  else{
-    ROS_ERROR_STREAM("failed to open G29");
+  if (!joy_){
+    ROS_ERROR_STREAM("failed to open G29 from SDL");
     std::exit(0);
   }
+  //setup hid for haptics
   hid_init();
+  struct hid_device_info *devs, *cur_dev;
+	devs = hid_enumerate(0x0, 0x0);
+	cur_dev = devs;	
+	while (cur_dev) {
+    /*
+		printf("Device Found\n  type: %04hx %04hx\n  path: %s\n  serial_number: %ls \n",
+			cur_dev->vendor_id, cur_dev->product_id, cur_dev->path, cur_dev->serial_number);
+      */
+      /*
+    printf("vender : %01hx \n", cur_dev->vendor_id);
+    printf("product : %01hx \n", cur_dev->product_id);
+    printf("\n");
+    */
+    ROS_ERROR_STREAM(cur_dev->vendor_id << "," << cur_dev->product_id);
+		cur_dev = cur_dev->next;
+	}
+	hid_free_enumeration(devs);
+  hid_handle_ = hid_open(1133,49743,NULL);
+  /*
+  hid_handle_ = hid_open(0x04ca,0x005a,NULL);
+  */
+  if(hid_handle_ == NULL){
+    ROS_ERROR_STREAM("failed to open G29 from hidapi");
+    std::exit(0);
+  }
+  std::wstring_convert<std::codecvt_utf8<wchar_t>,wchar_t> cv;
+  wchar_t wstr[BUFFER];
+  //hid_get_manufacturer_string(hid_handle_, wstr, BUFFER);
+  //std::string manufacture = cv.to_bytes(wstr);
+  //ROS_ERROR_STREAM("manufacture : " << manufacture);
+  ROS_INFO_STREAM("connect to " << SDL_JoystickNameForIndex(0));
   return;
 }
