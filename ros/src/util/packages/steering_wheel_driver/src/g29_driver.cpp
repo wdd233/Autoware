@@ -63,9 +63,13 @@ void G29Driver::vehicleStatusFeedback(autoware_msgs::VehicleStatus msg) {
   return;
 }
 
- void G29Driver::changeSteeringAngle(double target_angle){
-   return;
- }
+void G29Driver::changeSteeringAngle(double target_angle){
+  return;
+}
+
+void G29Driver::addForce(double target_force){
+  return;
+}
 
 void G29Driver::setup() {
   if (SDL_Init(SDL_INIT_JOYSTICK) < 0){
@@ -80,5 +84,6 @@ void G29Driver::setup() {
     ROS_ERROR_STREAM("failed to open G29");
     std::exit(0);
   }
+  hid_init();
   return;
 }

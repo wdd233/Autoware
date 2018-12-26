@@ -85,7 +85,7 @@ include_directories(
 )
 
 add_executable(g29_driver_node src/g29_driver_node.cpp src/g29_driver.cpp)
-target_link_libraries(g29_driver_node ${catkin_LIBRARIES} ${SDL2_LIBRARY})
+target_link_libraries(g29_driver_node ${catkin_LIBRARIES} ${SDL2_LIBRARY} hidapi-libusb hidapi-hidraw)
 
 # CPP Execution programs
 set(CPP_EXEC_NAMES g29_driver_node)

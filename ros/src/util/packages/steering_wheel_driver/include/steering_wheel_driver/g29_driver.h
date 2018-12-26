@@ -14,6 +14,9 @@
 //headers in SDL
 #include <SDL2/SDL.h>
 
+//heaers in hidapi
+#include <hidapi/hidapi.h>
+
 //headers in boost
 #include <boost/optional.hpp>
 
@@ -28,19 +31,15 @@ private:
     ros::NodeHandle pnh_;
     ros::Publisher cmd_pub_;
     void publishCmd();
-    /*
-    int setup(void);
-    void ActuaterFeedback(const std_msgs::UInt16MultiArray& ActuatorStatus);
-    */
     int ffUpdate(SDL_Joystick * joystick , unsigned short center);
     void vehicleStatusFeedback(autoware_msgs::VehicleStatus msg);
     boost::optional<autoware_msgs::VehicleStatus> status_;
     void setup();
     int joystick_id_;
     SDL_Joystick *joy_;
-    SDL_Haptic *haptic_;
-    //SDL_HapticEffect effect_;
+    void addForce(double target_force);
     void changeSteeringAngle(double target_angle);
+    hid_device *hid_handle_;
 };
 
 #endif  //G29_DRIVER_H_INCLUDED
