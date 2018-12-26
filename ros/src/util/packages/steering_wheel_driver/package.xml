@@ -20,6 +20,6 @@
   <exec_depend>pluginlib</exec_depend>
 
   <export>
-    <steering_wheel_driver plugin="${prefix}/plugin.xml" />
+    <steering_wheel_driver plugin="${prefix}/plugins.xml" />
   </export>
 </package>

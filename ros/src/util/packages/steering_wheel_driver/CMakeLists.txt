@@ -19,14 +19,11 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(steering_wheel_driver_node src/steering_wheel_driver_node.cpp)
-target_link_libraries(steering_wheel_driver_node ${catkin_LIBRARIES})
-
-add_library(steering_wheel_driver_plugin src/g29_plugin.cpp)
-target_link_libraries(steering_wheel_driver_plugin ${catkin_LIBRARIES})
+add_executable(g29_driver_node src/g29_driver_node.cpp src/g29_driver.cpp)
+target_link_libraries(g29_driver_node ${catkin_LIBRARIES})
 
 # CPP Execution programs
-set(CPP_EXEC_NAMES steering_wheel_driver_node)
+set(CPP_EXEC_NAMES g29_driver_node)
 foreach(cpp_exec_names ${CPP_EXEC_NAMES})
   install(TARGETS ${cpp_exec_names}
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -38,9 +35,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 
-# Install library
-install(TARGETS steering_wheel_driver_plugin
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
-)
+foreach(dir launch)
+  install(DIRECTORY ${dir}/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/${dir})
+endforeach(dir)
