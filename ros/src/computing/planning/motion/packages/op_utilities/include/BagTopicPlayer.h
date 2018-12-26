@@ -50,7 +50,7 @@ template <class T>
 class BagTopicPlayer
 {
 public:
-	void InitPlayer(const rosbag::Bag& _bag, const std::string& topic_name)
+	void InitPlayer(const rosbag::Bag& _bag, const std::string& topic_name , const std::string& topic_type)
 	{
 		if(_bag.getSize() == 0) return;
 
@@ -58,23 +58,45 @@ public:
 		std::vector<const rosbag::ConnectionInfo *> connection_infos = view.getConnections();
 		std::vector<std::string> topics_to_subscribe;
 
-		std::set<std::string> bagTopics;
+		std::vector<std::pair<std::string, std::string> > bagTopics;
 
 		BOOST_FOREACH(const rosbag::ConnectionInfo *info, connection_infos)
 		{
-			bagTopics.insert(info->topic);
+			bagTopics.push_back(std::make_pair(info->topic, info->datatype));
 		}
 
-		if (bagTopics.find(topic_name) == bagTopics.end())
+		bool bFound = false;
+		std::string topic_name_in_file = topic_name;
+
+		for(unsigned int i=0; i < bagTopics.size(); i++)
+		{
+			if(bagTopics.at(i).first.compare(topic_name) == 0)
+			{
+				bFound = true;
+				break;
+			}
+		}
+
+		if(!bFound)
+		{
+			for(unsigned int i=0; i < bagTopics.size(); i++)
+			{
+				if(bagTopics.at(i).second.compare(topic_type) == 0)
+				{
+					topic_name_in_file = bagTopics.at(i).first;
+					bFound = true;
+					break;
+				}
+			}
+		}
+
+		if(!bFound)
 		{
 			ROS_WARN_STREAM("Can't Find LIDAR Topic in RosBag File :" << topic_name);
 			return;
 		}
-		else
-		{
-			topics_to_subscribe.push_back(std::string(topic_name));
-		}
 
+		topics_to_subscribe.push_back(std::string(topic_name_in_file));
 		m_BagView.addQuery(_bag, rosbag::TopicQuery(topics_to_subscribe));
 		m_ViewIterator = m_BagView.begin();
 		m_StartTime = m_BagView.getBeginTime();

@@ -54,8 +54,9 @@ ImmUkfPda::ImmUkfPda()
   private_nh_.param<bool>("is_debug", is_debug_, false);
 
   // rosparam for benchmark
-  private_nh_.param<bool>("is_benchmark", is_benchmark_, false);
-  private_nh_.param<std::string>("kitti_data_dir", kitti_data_dir_, "/home/hoge/kitti/2011_09_26/2011_09_26_drive_0005_sync/");
+  private_nh_.param<bool>("is_benchmark", is_benchmark_, true);
+  private_nh_.param<std::string>("kitti_data_dir", kitti_data_dir_, "/media/hatem/ac16c202-4cf2-4584-b6c9-1d85db174f5a/KITTI_Data/2011_09_26/2011_09_26_drive_0005_sync/");
+  kitti_data_dir_ = "/media/hatem/ac16c202-4cf2-4584-b6c9-1d85db174f5a/KITTI_Data/2011_09_26/2011_09_26_drive_0005_sync/";
   if(is_benchmark_)
   {
     result_file_path_ = kitti_data_dir_ + "benchmark_results.txt";
@@ -769,6 +770,7 @@ void ImmUkfPda::pubDebugRosMarker(const autoware_msgs::DetectedObjectArray& inpu
 
 void ImmUkfPda::dumpResultText(autoware_msgs::DetectedObjectArray& detected_objects)
 {
+	std::cout << ">>> Benchmark Path : " << result_file_path_ << std::endl;
   std::ofstream outputfile(result_file_path_, std::ofstream::out | std::ofstream::app);
   for(size_t i = 0; i < detected_objects.objects.size(); i++)
   {

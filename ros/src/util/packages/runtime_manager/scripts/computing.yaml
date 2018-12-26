@@ -1311,10 +1311,19 @@ params :
         dash     : ''
         delim    : ':='
     - name : enableLogging
-      desc : Enable Writ csv of internal tracking state
+      desc : Enable Writ csv of internal tracking state 
       label: Enable CSV Logs
       kind : checkbox
       v    : False
+      cmd_param:
+        dash     : ''
+        delim    : ':='
+    - name : splitter_topic
+      desc : splitter topic
+      label: Advanced Params -----------------------------------------------------------------
+      min  : 0
+      max  : 0
+      v    : 0
       cmd_param:
         dash     : ''
         delim    : ':='
