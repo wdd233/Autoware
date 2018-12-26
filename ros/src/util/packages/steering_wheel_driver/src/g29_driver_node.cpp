@@ -6,7 +6,7 @@ int main(int argc, char *argv[]) {
   ros::init(argc, argv, "g29_driver_node");
   ros::NodeHandle nh;
   ros::NodeHandle pnh("~");
-  g29_driver driver(nh,pnh);
+  G29Driver driver(nh,pnh);
   ros::spin();
   return 0;
 }
