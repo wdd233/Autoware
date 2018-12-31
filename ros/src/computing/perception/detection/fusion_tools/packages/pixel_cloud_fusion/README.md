@@ -30,6 +30,7 @@ Launch file available parameters:
 |`points_src`|*String* |Name of the PointCloud topic to subscribe.|Default `points_raw`|
 |`image_src`|*String*|Name of the Image topic to subscribe **NOTE: Must be a previously rectified image (check Autoware's `image_processor` or ROS `image_proc`.**|Default: `image_rectified`|
 |`camera_info_src`|*String*|Name of the CameraInfo topic that contains the intrinsic matrix for the Image.|`camera_info`|
+|`use_gpu`|*Boolean*|Whether or not to use GPU acceleration (if CUDA and compatible GPU are installed).|`false`|
 
 ### Subscriptions/Publications
 

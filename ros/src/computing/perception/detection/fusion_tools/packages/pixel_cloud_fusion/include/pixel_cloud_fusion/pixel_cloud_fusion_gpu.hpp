@@ -1,6 +1,9 @@
 #ifndef PROJECT_PIXEL_CLOUD_FUSION_GPU_H
 #define PROJECT_PIXEL_CLOUD_FUSION_GPU_H
 
+#include <vector>
+#include <cuda_runtime.h>
+
 #include <tf/tf.h>
 
 #include <pcl/PCLPointCloud2.h>
