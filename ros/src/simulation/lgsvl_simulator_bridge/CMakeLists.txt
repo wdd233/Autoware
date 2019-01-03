@@ -43,11 +43,6 @@ include_directories(
 #############
 ## Install ##
 #############
-foreach(programs)
-  install(TARGETS ${programs}
-    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-endforeach(nodes)
 
 install(DIRECTORY include
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
