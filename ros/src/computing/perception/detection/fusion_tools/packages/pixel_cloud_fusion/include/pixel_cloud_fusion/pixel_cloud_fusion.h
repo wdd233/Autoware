@@ -70,8 +70,6 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
 
-#include <Eigen/Eigen>
-
 #ifdef CUDA_FOUND
 #include "pixel_cloud_fusion/pixel_cloud_fusion_gpu.hpp"
 #endif  // CUDA_FOUND

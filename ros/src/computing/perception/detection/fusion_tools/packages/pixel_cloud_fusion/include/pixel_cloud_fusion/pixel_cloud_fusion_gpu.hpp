@@ -4,6 +4,11 @@
 #include <vector>
 #include <cuda_runtime.h>
 
+#if ( __CUDACC_VER_MAJOR__ >=9 )
+#undef  __CUDACC_VER__
+#define __CUDACC_VER__ 90000
+#endif
+
 #include <tf/tf.h>
 
 #include <pcl/PCLPointCloud2.h>
