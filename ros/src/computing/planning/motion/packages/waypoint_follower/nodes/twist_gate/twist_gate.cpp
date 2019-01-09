@@ -232,6 +232,7 @@ void TwistGate::auto_cmd_twist_cmd_callback(const geometry_msgs::TwistStamped::C
     twist_gate_msg_.header.stamp = input_msg->header.stamp;
     twist_gate_msg_.header.seq++;
     twist_gate_msg_.twist_cmd.twist = input_msg->twist;
+    //twist_gate_msg_.twist_cmd.twist.angular.z = twist_gate_msg_.twist_cmd.twist.angular.z*-1;
     vehicle_cmd_pub_.publish(twist_gate_msg_);
   }
 }
@@ -318,6 +319,7 @@ void TwistGate::ctrl_cmd_callback(const autoware_msgs::ControlCommandStamped::Co
     twist_gate_msg_.header.stamp = input_msg->header.stamp;
     twist_gate_msg_.header.seq++;
     twist_gate_msg_.ctrl_cmd = input_msg->cmd;
+    twist_gate_msg_.ctrl_cmd.steering_angle = twist_gate_msg_.ctrl_cmd.steering_angle * -1;
     vehicle_cmd_pub_.publish(twist_gate_msg_);
   }
 }
