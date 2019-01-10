@@ -11,6 +11,7 @@ GpuEuclideanCluster2::GpuEuclideanCluster2()
 	x_ = y_ = z_ = NULL;
 
 	point_num_ = 0;
+	padded_num_ = 0;
 	threshold_ = 0;
 	cluster_name_ = NULL;
 	cluster_name_host_ = NULL;
@@ -55,7 +56,7 @@ __global__ void convertFormat(pcl::PointXYZ *input, float *out_x, float *out_y, 
 		out_y[i] = tmp_input.y;
 		out_z[i] = tmp_input.z;
 		// Convert to 2d cloud
-		// out_z[i] = 0;
+		//out_z[i] = 0;
 	}
 }
 
@@ -67,6 +68,11 @@ void GpuEuclideanCluster2::exclusiveScan(int *input, int ele_num, int *sum)
 void GpuEuclideanCluster2::exclusiveScan(long long int *input, int ele_num, long long int *sum)
 {
 	exclusiveScan<long long int>(input, ele_num, sum);
+}
+
+void GpuEuclideanCluster2::exclusiveScan(unsigned long long int *input, int ele_num, unsigned long long int *sum)
+{
+	exclusiveScan<unsigned long long int>(input, ele_num, sum);
 }
 
 template <typename T>
@@ -94,16 +100,17 @@ void GpuEuclideanCluster2::setInputPoints(pcl::PointCloud<pcl::PointXYZ>::Ptr in
 
 	if (input->size() > 0) {
 		point_num_ = input->size();
-		checkCudaErrors(cudaMalloc(&x_, sizeof(float) * point_num_));
-		checkCudaErrors(cudaMalloc(&y_, sizeof(float) * point_num_));
-		checkCudaErrors(cudaMalloc(&z_, sizeof(float) * point_num_));
+		padded_num_ = ((point_num_ - 1) / block_size_x_ + 1) * block_size_x_;
+		checkCudaErrors(cudaMalloc(&x_, sizeof(float) * padded_num_));
+		checkCudaErrors(cudaMalloc(&y_, sizeof(float) * padded_num_));
+		checkCudaErrors(cudaMalloc(&z_, sizeof(float) * padded_num_));
 
 		pcl::PointXYZ *dev_tmp_input;
 
 		checkCudaErrors(cudaMalloc(&dev_tmp_input, sizeof(pcl::PointXYZ) * point_num_));
 		checkCudaErrors(cudaMemcpy(dev_tmp_input, input->points.data(), sizeof(pcl::PointXYZ) * point_num_, cudaMemcpyHostToDevice));
 
-		int block_x = (point_num_ > BLOCK_SIZE_X) ? BLOCK_SIZE_X : point_num_;
+		int block_x = (point_num_ > block_size_x_) ? block_size_x_ : point_num_;
 		int grid_x = (point_num_ - 1) / block_x + 1;
 
 		convertFormat<<<grid_x, block_x>>>(dev_tmp_input, x_, y_, z_, point_num_);
@@ -154,6 +161,7 @@ std::vector<GpuEuclideanCluster2::GClusterIndex> GpuEuclideanCluster2::getOutput
 		cluster.points_in_cluster.push_back(i);
 	}
 
+
 	int point_num_test = 0;
 
 	for (unsigned int i = 0; i < output.size();) {
@@ -181,7 +189,7 @@ __global__ void renameClusters(int *cluster_name, int *cluster_location, int poi
 }
 
 void GpuEuclideanCluster2::renamingClusters(int *cluster_names, int *cluster_location, int point_num) {
-	int block_x = (point_num > BLOCK_SIZE_X) ? BLOCK_SIZE_X : point_num;
+	int block_x = (point_num > block_size_x_) ? block_size_x_ : point_num;
 	int grid_x = (point_num - 1) / block_x + 1;
 
 	renameClusters<<<grid_x, block_x>>>(cluster_names, cluster_location, point_num);

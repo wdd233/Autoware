@@ -283,6 +283,7 @@ void GpuEuclideanCluster2::extractClusters2()
 	checkCudaErrors(cudaGetLastError());
 	checkCudaErrors(cudaDeviceSynchronize());
 
+
 #ifdef TEST_VERTEX_
 	gettimeofday(&end, NULL);
 
@@ -293,11 +294,14 @@ void GpuEuclideanCluster2::extractClusters2()
 
 	exclusiveScan(adjacent_count, point_num_ + 1, &adjacent_list_size);
 
+
 	if (adjacent_list_size == 0) {
 		checkCudaErrors(cudaFree(adjacent_count));
 		cluster_num_ = 0;
 		return;
 	}
+
+	std::cout << "Adjacent list size = " << adjacent_list_size << std::endl;
 	checkCudaErrors(cudaMalloc(&adjacent_list, sizeof(int) * adjacent_list_size));
 
 
@@ -315,16 +319,10 @@ void GpuEuclideanCluster2::extractClusters2()
 	std::cout << "Build ADJ = " << timeDiff(start, end) << std::endl;
 #endif
 
-#define HOST_ALLOC_
-
 	bool *changed;
 
-#ifndef HOST_ALLOC_
 	bool hchanged;
 	checkCudaErrors(cudaMalloc(&changed, sizeof(bool)));
-#else
-	checkCudaErrors(cudaMallocHost(&changed, sizeof(bool)));
-#endif
 
 	int *frontier_array1, *frontier_array2;
 
@@ -343,12 +341,8 @@ void GpuEuclideanCluster2::extractClusters2()
 	int itr = 0;
 
 	do {
-#ifndef HOST_ALLOC_
 		hchanged = false;
 		checkCudaErrors(cudaMemcpy(changed, &hchanged, sizeof(bool), cudaMemcpyHostToDevice));
-#else
-		*changed = false;
-#endif
 
 		clustering<<<grid_x, block_x>>>(adjacent_count, adjacent_list, point_num_, cluster_name_, frontier_array1, frontier_array2, changed);
 		checkCudaErrors(cudaGetLastError());
@@ -359,21 +353,20 @@ void GpuEuclideanCluster2::extractClusters2()
 		tmp = frontier_array1;
 		frontier_array1 = frontier_array2;
 		frontier_array2 = tmp;
-#ifndef HOST_ALLOC_
+
 		checkCudaErrors(cudaMemcpy(&hchanged, changed, sizeof(bool), cudaMemcpyDeviceToHost));
-	} while (hchanged);
-#else
+
 		itr++;
-	} while (*changed);
-#endif
+	} while (hchanged);
+
+
 
 #ifdef TEST_VERTEX_
 	gettimeofday(&end, NULL);
 
-	std::cout << "Iteration = " << timeDiff(start, end) << std::endl;
+	std::cout << "Iteration = " << timeDiff(start, end) << " itr_num = " << itr << std::endl;
 #endif
 
-	std::cout << "Iteration num = " << itr << std::endl;
 
 	// renaming clusters
 	int *cluster_location;
@@ -395,13 +388,164 @@ void GpuEuclideanCluster2::extractClusters2()
 	checkCudaErrors(cudaFree(adjacent_list));
 	checkCudaErrors(cudaFree(frontier_array1));
 	checkCudaErrors(cudaFree(frontier_array2));
-#ifndef HOST_ALLOC_
 	checkCudaErrors(cudaFree(changed));
-#else
-	checkCudaErrors(cudaFreeHost(changed));
-#endif
 	checkCudaErrors(cudaFree(cluster_location));
 
 	std::cout << "FINAL CLUSTER NUM = " << cluster_num_ << std::endl;
 }
 
+
+
+void GpuEuclideanCluster2::extractClusters2(long long &total_time, long long &build_graph, long long &clustering_time, int &iteration_num)
+{
+	total_time = build_graph = clustering_time = 0;
+	iteration_num = 0;
+
+	initClusters();
+
+	int block_x = (point_num_ < block_size_x_) ? point_num_ : block_size_x_;
+	int grid_x = (point_num_ - 1) / block_x + 1;
+
+	long long int *adjacent_count;
+	int *adjacent_list;
+
+#ifdef TEST_VERTEX_
+	struct timeval start, end;
+
+	gettimeofday(&start, NULL);
+#endif
+
+	checkCudaErrors(cudaMalloc(&adjacent_count, sizeof(long long int) * (point_num_ + 1)));
+
+	countAdjacentList<<<grid_x, block_x, sizeof(float) * block_size_x_ * 3>>>(x_, y_, z_, point_num_, threshold_, adjacent_count);
+	checkCudaErrors(cudaGetLastError());
+	checkCudaErrors(cudaDeviceSynchronize());
+
+
+#ifdef TEST_VERTEX_
+	gettimeofday(&end, NULL);
+
+	build_graph += timeDiff(start, end);
+	total_time += timeDiff(start, end);
+	//std::cout << "Count ADJ = " << timeDiff(start, end) << std::endl;
+#endif
+
+	long long int adjacent_list_size;
+
+#ifdef TEST_VERTEX_
+	gettimeofday(&start, NULL);
+#endif
+	exclusiveScan(adjacent_count, point_num_ + 1, &adjacent_list_size);
+#ifdef TEST_VERTEX_
+	gettimeofday(&end, NULL);
+
+	build_graph += timeDiff(start, end);
+	total_time += timeDiff(start, end);
+#endif
+
+	if (adjacent_list_size == 0) {
+		checkCudaErrors(cudaFree(adjacent_count));
+		cluster_num_ = 0;
+		return;
+	}
+
+
+#ifdef TEST_VERTEX_
+	gettimeofday(&start, NULL);
+#endif
+
+	checkCudaErrors(cudaMalloc(&adjacent_list, sizeof(int) * adjacent_list_size));
+
+	buildAdjacentList<<<grid_x, block_x, sizeof(float) * block_size_x_ * 3>>>(x_, y_, z_, point_num_, threshold_, adjacent_count, adjacent_list);
+	checkCudaErrors(cudaGetLastError());
+	checkCudaErrors(cudaDeviceSynchronize());
+
+#ifdef TEST_VERTEX_
+	gettimeofday(&end, NULL);
+
+	build_graph += timeDiff(start, end);
+	total_time += timeDiff(start, end);
+	//std::cout << "Build ADJ = " << timeDiff(start, end) << std::endl;
+#endif
+
+	bool *changed;
+
+	bool hchanged;
+	checkCudaErrors(cudaMalloc(&changed, sizeof(bool)));
+
+	int *frontier_array1, *frontier_array2;
+
+#ifdef TEST_VERTEX_
+	gettimeofday(&start, NULL);
+#endif
+
+	checkCudaErrors(cudaMalloc(&frontier_array1, sizeof(int) * point_num_));
+	checkCudaErrors(cudaMalloc(&frontier_array2, sizeof(int) * point_num_));
+
+	frontierInitialize<<<grid_x, block_x>>>(frontier_array1, point_num_);
+	checkCudaErrors(cudaGetLastError());
+	checkCudaErrors(cudaMemset(frontier_array2, 0, sizeof(int) * point_num_));
+	checkCudaErrors(cudaDeviceSynchronize());
+
+	int itr = 0;
+
+	do {
+		hchanged = false;
+		checkCudaErrors(cudaMemcpy(changed, &hchanged, sizeof(bool), cudaMemcpyHostToDevice));
+
+		clustering<<<grid_x, block_x>>>(adjacent_count, adjacent_list, point_num_, cluster_name_, frontier_array1, frontier_array2, changed);
+		checkCudaErrors(cudaGetLastError());
+		checkCudaErrors(cudaDeviceSynchronize());
+
+		int *tmp;
+
+		tmp = frontier_array1;
+		frontier_array1 = frontier_array2;
+		frontier_array2 = tmp;
+
+		checkCudaErrors(cudaMemcpy(&hchanged, changed, sizeof(bool), cudaMemcpyDeviceToHost));
+
+		itr++;
+	} while (hchanged);
+
+
+
+#ifdef TEST_VERTEX_
+	gettimeofday(&end, NULL);
+
+	clustering_time += timeDiff(start, end);
+	total_time += timeDiff(start, end);
+	//std::cout << "Iteration = " << timeDiff(start, end) << " itr_num = " << itr << std::endl;
+	iteration_num = itr;
+#endif
+
+
+	// renaming clusters
+	int *cluster_location;
+
+	gettimeofday(&start, NULL);
+	checkCudaErrors(cudaMalloc(&cluster_location, sizeof(int) * (point_num_ + 1)));
+	checkCudaErrors(cudaMemset(cluster_location, 0, sizeof(int) * (point_num_ + 1)));
+
+	clusterMark2<<<grid_x, block_x>>>(cluster_name_, cluster_location, point_num_);
+	checkCudaErrors(cudaGetLastError());
+	checkCudaErrors(cudaDeviceSynchronize());
+
+	exclusiveScan(cluster_location, point_num_ + 1, &cluster_num_);
+
+	renamingClusters(cluster_name_, cluster_location, point_num_);
+
+	checkCudaErrors(cudaMemcpy(cluster_name_host_, cluster_name_, sizeof(int) * point_num_, cudaMemcpyDeviceToHost));
+
+	checkCudaErrors(cudaFree(adjacent_count));
+	checkCudaErrors(cudaFree(adjacent_list));
+	checkCudaErrors(cudaFree(frontier_array1));
+	checkCudaErrors(cudaFree(frontier_array2));
+	checkCudaErrors(cudaFree(changed));
+	checkCudaErrors(cudaFree(cluster_location));
+	gettimeofday(&end, NULL);
+
+	total_time += timeDiff(start, end);
+
+	std::cout << "FINAL CLUSTER NUM = " << cluster_num_ << std::endl;
+}

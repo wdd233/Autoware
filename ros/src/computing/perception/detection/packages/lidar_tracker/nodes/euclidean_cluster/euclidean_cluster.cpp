@@ -78,6 +78,8 @@
 
 #include "Cluster.h"
 
+//#define GPU_CLUSTERING
+
 #ifdef GPU_CLUSTERING
 //	#include "gpu_euclidean_clustering.h"
 #include "euclidean_cluster/include/euclidean_cluster.h"
@@ -373,12 +375,18 @@ void keepLanePoints(const pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud_ptr,
 	extract.filter(*out_cloud_ptr);
 }
 
+enum ECMethodTypes {
+	EC_MATRIX_ = 0,
+	EC_EDGE_,
+	EC_VERTEX_
+};
+
 #ifdef GPU_CLUSTERING
 std::vector<ClusterPtr> clusterAndColorGpu(const pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud_ptr,
 											pcl::PointCloud<pcl::PointXYZRGB>::Ptr out_cloud_ptr,
 											jsk_recognition_msgs::BoundingBoxArray& in_out_boundingbox_array,
 											autoware_msgs::centroids& in_out_centroids,
-											float &result, int block_size = 1024, bool density_measure = false,
+											int block_size = 1024, ECMethodTypes method = EC_MATRIX_,
 											double in_max_cluster_distance=0.5)
 {
 	std::vector<ClusterPtr> clusters;
@@ -392,33 +400,21 @@ std::vector<ClusterPtr> clusterAndColorGpu(const pcl::PointCloud<pcl::PointXYZ>:
 
 	GpuEuclideanCluster2 gecl_cluster;
 
-	//gecl_cluster.setInputPoints(tmp_x, tmp_y, tmp_z, size);
-	struct timeval start, end;
-
-	std::cout << "Block size = " << block_size << std::endl;
-
-	gettimeofday(&start, NULL);
-
 	gecl_cluster.setInputPoints(in_cloud_ptr);
 	gecl_cluster.setThreshold(in_max_cluster_distance);
 	gecl_cluster.setMinClusterPts (_cluster_size_min);
 	gecl_cluster.setMaxClusterPts (_cluster_size_max);
 	gecl_cluster.setBlockSizeX(block_size);
-	gettimeofday(&end, NULL);
 
-	std::cout << "Set input = " << timeDiff(start, end) << std::endl;
-
-	gettimeofday(&start, NULL);
-	gecl_cluster.extractClusters2();
-	std::cout << "End of extraction " << std::endl;
-	std::vector<GpuEuclideanCluster2::GClusterIndex> cluster_indices = gecl_cluster.getOutput();
-	gettimeofday(&end, NULL);
-
-	std::cout << "TOtal time = " << timeDiff(start, end) << std::endl;
-
-	if (density_measure) {
-		result = gecl_cluster.density();
+	if (method == EC_MATRIX_) {
+		gecl_cluster.extractClusters();
+	} else if (method == EC_EDGE_) {
+		gecl_cluster.extractClusters3();
+	} else {
+		gecl_cluster.extractClusters2();
 	}
+
+	std::vector<GpuEuclideanCluster2::GClusterIndex> cluster_indices = gecl_cluster.getOutput();
 
 	unsigned int k = 0;
 
@@ -614,11 +610,11 @@ void segmentByDistance(const pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud_ptr,
 
 	std::vector <ClusterPtr> all_clusters;
 
-	std::ofstream out_file("/home/anh/EuclideanClustering/execution_time_vertex_16.csv", std::ios::app);
-
-	if (!(out_file.is_open())) {
-		std::cout << "Error: Cannot open file " << std::endl;
-	}
+//	std::ofstream out_file("/home/anh/EuclideanClustering/no1-201711071520_1510632362_16.csv", std::ios::app);
+//
+//	if (!(out_file.is_open())) {
+//		std::cout << "Error: Cannot open file " << std::endl;
+//	}
 
 	struct timeval start, end;
 
@@ -626,167 +622,66 @@ void segmentByDistance(const pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud_ptr,
 #define timeDiff(s, e) ((e.tv_sec - s.tv_sec) * 1000000 + (e.tv_usec - s.tv_usec))
 #endif
 
-	gettimeofday(&start, NULL);
-	int total_points = 0;
-	float density = 0;
+	int points_num = 0;
+	long long e_total, m_total, v_total, c_total;
+
+	e_total = m_total = v_total = c_total = 0;
 
 	for(unsigned int i=0; i<cloud_segments_array.size(); i++)
 	{
-		float tmp;
 #ifdef GPU_CLUSTERING
     std::vector<ClusterPtr> local_clusters;
 
-    total_points += cloud_segments_array[i]->points.size();
+    points_num += cloud_segments_array[i]->points.size();
 	//if (_use_gpu) {
-		local_clusters = clusterAndColorGpu(cloud_segments_array[i], out_cloud_ptr, in_out_boundingbox_array, in_out_centroids, tmp, 1024, true, _clustering_thresholds[i]);
-		std::cout << "TMP = " << tmp << std::endl;
+    gettimeofday(&start, NULL);
+	local_clusters = clusterAndColorGpu(cloud_segments_array[i], out_cloud_ptr, in_out_boundingbox_array, in_out_centroids, 1024, EC_MATRIX_, _clustering_thresholds[i]);
+	gettimeofday(&end, NULL);
+
+	m_total += timeDiff(start, end);
+
+//    gettimeofday(&start, NULL);
+//	local_clusters = clusterAndColorGpu(cloud_segments_array[i], out_cloud_ptr, in_out_boundingbox_array, in_out_centroids, 1024, EC_EDGE_, _clustering_thresholds[i]);
+//	gettimeofday(&end, NULL);
+//
+//	e_total += timeDiff(start, end);
+//
+//    gettimeofday(&start, NULL);
+//	local_clusters = clusterAndColorGpu(cloud_segments_array[i], out_cloud_ptr, in_out_boundingbox_array, in_out_centroids, 1024, EC_VERTEX_, _clustering_thresholds[i]);
+//	gettimeofday(&end, NULL);
+//
+//	v_total += timeDiff(start, end);
+//
+//	gettimeofday(&start, NULL);
+//	local_clusters = clusterAndColor(cloud_segments_array[i], out_cloud_ptr, in_out_boundingbox_array, in_out_centroids, _clustering_thresholds[i]);
+//	gettimeofday(&end, NULL);
+//
+//	c_total += timeDiff(start, end);
+
 //	} else {
 //		local_clusters = clusterAndColor(cloud_segments_array[i], out_cloud_ptr, in_out_boundingbox_array, in_out_centroids, _clustering_thresholds[i]);
 //
 //	}
 
-	if (density < tmp)
-		density = tmp;
 #else
 		std::vector<ClusterPtr> local_clusters = clusterAndColor(cloud_segments_array[i], out_cloud_ptr, in_out_boundingbox_array, in_out_centroids, _clustering_thresholds[i]);
 #endif
 		all_clusters.insert(all_clusters.end(), local_clusters.begin(), local_clusters.end());
 	}
 
-	gettimeofday(&end, NULL);
-
+	// Output result
+	//out_file << points_num << "," << e_total << "," << m_total << "," << v_total << "," << c_total << std::endl;
 
 	if (test_gpu) {
-		//GPUECTest::sparseGraphTest();
+		// GPUECTest::sparseGraphTest();
 
-		GPUECTest::clusterNumVariationTest();
+		// GPUECTest::clusterNumVariationTest();
+
+		 GPUECTest::pointCloudVariationTest();
+
 		test_gpu = false;
 	}
 
-	gettimeofday(&start, NULL);
-
-	std::cout << "***********************************************" << std::endl;
-	std::cout << "Density = " << density << std::endl;
-	std::cout << "Cluster num 1024 = ";
-	for(unsigned int i=0; i<cloud_segments_array.size(); i++)
-	{
-		std::vector<ClusterPtr> local_clusters;
-
-		local_clusters = clusterAndColorGpu(cloud_segments_array[i], out_cloud_ptr, in_out_boundingbox_array, in_out_centroids, density, 1024, false, _clustering_thresholds[i]);
-
-		std::cout << "Cluster num = " << local_clusters.size() << std::endl << std::endl;
-	}
-	std::cout << std::endl;
-
-	gettimeofday(&end, NULL);
-	out_file << density << ",";
-	out_file << total_points << "," << timeDiff(start, end) << ",";
-
-	std::cout << "Points num = " << total_points << std::endl;
-	std::cout << "GPU execution time 1024 = " << timeDiff(start, end) << std::endl << std::endl;
-
-	gettimeofday(&start, NULL);
-
-	std::cout << "***********************************************" << std::endl;
-	std::cout << "Cluster num 512 = ";
-	for(unsigned int i=0; i<cloud_segments_array.size(); i++)
-	{
-		std::vector<ClusterPtr> local_clusters;
-		local_clusters = clusterAndColorGpu(cloud_segments_array[i], out_cloud_ptr, in_out_boundingbox_array, in_out_centroids, density, 512, false, _clustering_thresholds[i]);
-		std::cout << "Cluster num = " << local_clusters.size() << std::endl << std::endl;
-	}
-	std::cout << std::endl;
-
-	gettimeofday(&end, NULL);
-
-	out_file << timeDiff(start, end) << ",";
-	std::cout << "GPU execution time 512 = " << timeDiff(start, end) << std::endl << std::endl;
-
-	gettimeofday(&start, NULL);
-
-	std::cout << "***********************************************" << std::endl;
-	std::cout << "Cluster num 256 = ";
-	for(unsigned int i=0; i<cloud_segments_array.size(); i++)
-	{
-		std::vector<ClusterPtr> local_clusters;
-		local_clusters = clusterAndColorGpu(cloud_segments_array[i], out_cloud_ptr, in_out_boundingbox_array, in_out_centroids, density, 256, false, _clustering_thresholds[i]);
-		std::cout << "Cluster num = " << local_clusters.size() << std::endl << std::endl;
-	}
-	std::cout << std::endl;
-
-	gettimeofday(&end, NULL);
-
-	out_file << timeDiff(start, end) << ",";
-	std::cout << "GPU execution time 256 = " << timeDiff(start, end) << std::endl << std::endl;
-
-	gettimeofday(&start, NULL);
-
-	std::cout << "***********************************************" << std::endl;
-	std::cout << "Cluster num 128 = ";
-	for(unsigned int i=0; i<cloud_segments_array.size(); i++)
-	{
-		std::vector<ClusterPtr> local_clusters;
-		local_clusters = clusterAndColorGpu(cloud_segments_array[i], out_cloud_ptr, in_out_boundingbox_array, in_out_centroids, density, 128, false, _clustering_thresholds[i]);
-		std::cout << "Cluster num = " << local_clusters.size() << std::endl << std::endl;
-	}
-	std::cout << std::endl;
-
-	gettimeofday(&end, NULL);
-
-	out_file << timeDiff(start, end) << ",";
-	std::cout << "GPU execution time 128 = " << timeDiff(start, end) << std::endl << std::endl;
-
-	gettimeofday(&start, NULL);
-
-	std::cout << "***********************************************" << std::endl;
-	std::cout << "Cluster num 64 = ";
-	for(unsigned int i=0; i<cloud_segments_array.size(); i++)
-	{
-		std::vector<ClusterPtr> local_clusters;
-		local_clusters = clusterAndColorGpu(cloud_segments_array[i], out_cloud_ptr, in_out_boundingbox_array, in_out_centroids, density, 64, false, _clustering_thresholds[i]);
-		std::cout << "Cluster num = " << local_clusters.size() << std::endl << std::endl;
-	}
-	std::cout << std::endl;
-
-	gettimeofday(&end, NULL);
-
-	out_file << timeDiff(start, end) << ",";
-	std::cout << "GPU execution time 64 = " << timeDiff(start, end) << std::endl << std::endl;
-
-
-	gettimeofday(&start, NULL);
-
-	std::cout << "***********************************************" << std::endl;
-	std::cout << "Cluster num 32 = ";
-	for(unsigned int i=0; i<cloud_segments_array.size(); i++)
-	{
-		std::vector<ClusterPtr> local_clusters;
-		local_clusters = clusterAndColorGpu(cloud_segments_array[i], out_cloud_ptr, in_out_boundingbox_array, in_out_centroids, density, 32, false, _clustering_thresholds[i]);
-		std::cout << "Cluster num = " << local_clusters.size() << std::endl << std::endl;
-	}
-	std::cout << std::endl;
-
-	gettimeofday(&end, NULL);
-
-	out_file << timeDiff(start, end) << ",";
-	std::cout << "GPU execution time 32 = " << timeDiff(start, end) << std::endl << std::endl;
-
-	gettimeofday(&start, NULL);
-
-	std::cout << "***********************************************" << std::endl;
-	std::cout << "Cluster num CPU = ";
-	for(unsigned int i=0; i<cloud_segments_array.size(); i++)
-	{
-		std::vector<ClusterPtr> local_clusters;
-		local_clusters = clusterAndColor(cloud_segments_array[i], out_cloud_ptr, in_out_boundingbox_array, in_out_centroids, _clustering_thresholds[i]);
-		std::cout << "Cluster num = " << local_clusters.size() << std::endl << std::endl;
-	}
-	std::cout << std::endl;
-
-	gettimeofday(&end, NULL);
-
-	out_file << timeDiff(start, end) << std::endl;
-	std::cout << "CPU execution time = " << timeDiff(start, end) << std::endl << std::endl;
 	//Clusters can be merged or checked in here
 	//....
 	//check for mergable clusters
