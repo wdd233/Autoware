@@ -102,8 +102,9 @@ struct AutowareStatus
 
   int found_stopsign_idx;
   int prev_stopped_wpidx;
+  int ordered_stop_idx;
 
-  AutowareStatus(void) : closest_waypoint(-1), velocity(0), found_stopsign_idx(-1), obstacle_waypoint(-1)
+  AutowareStatus(void) : closest_waypoint(-1), velocity(0), found_stopsign_idx(-1), obstacle_waypoint(-1), ordered_stop_idx(-1)
   {
   }
 
@@ -342,7 +343,6 @@ private:
   void entryMotionEmergencyState(cstring_t& state_name, int status);
   void entryDriveState(cstring_t& state_name, int status);
   void entryGoState(cstring_t& state_name, int status);
-  void entryStopState(cstring_t& state_name, int status);
   // update callback
   void updateWaitDriveReadyState(cstring_t& state_name, int status);
   void updateWaitEngageState(cstring_t& state_name, int status);
@@ -352,10 +352,10 @@ private:
   void updateWaitState(cstring_t& state_name, int status);
   void updateStopState(cstring_t& state_name, int status);
   void updateStoplineState(cstring_t& state_name, int status);
+  void updateOrderedStopState(cstring_t& state_name, int status);
+  void updateReservedStopState(cstring_t& state_name, int status);
   // exit callback
   void exitMotionEmergencyState(cstring_t& state_name, int status);
-  void exitWaitState(cstring_t& state_name, int status);
-  void exitStopState(cstring_t& state_name, int status);
 
   // callback by topic subscribing
   void callbackFromFilteredPoints(const sensor_msgs::PointCloud2::ConstPtr& msg);
