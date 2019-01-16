@@ -309,8 +309,6 @@ private:
 
   /*** state behavior ***/
   // entry callback
-  void entryMovingState(cstring_t& state_name, int status);
-  void entryBehaviorEmergencyState(cstring_t& state_name, int status);
   void entryTurnState(cstring_t& state_name, int status);
   void entryLaneChangeState(cstring_t& state_name, int status);
   // update callback
@@ -339,7 +337,6 @@ private:
 
   /*** state motion ***/
   // entry callback
-  void entryMotionEmergencyState(cstring_t& state_name, int status);
   void entryDriveState(cstring_t& state_name, int status);
   void entryGoState(cstring_t& state_name, int status);
   void entryStopState(cstring_t& state_name, int status);
@@ -353,7 +350,6 @@ private:
   void updateStopState(cstring_t& state_name, int status);
   void updateStoplineState(cstring_t& state_name, int status);
   // exit callback
-  void exitMotionEmergencyState(cstring_t& state_name, int status);
   void exitWaitState(cstring_t& state_name, int status);
   void exitStopState(cstring_t& state_name, int status);
 
@@ -401,7 +397,6 @@ public:
     , param_num_of_steer_behind_(30)
   {
     std::string file_name_mission;
-    std::string file_name_drive;
     std::string file_name_vehicle;
     std::string file_name_behavior;
     std::string file_name_motion;
