@@ -8,3 +8,6 @@
 	path = ros/src/sensing/drivers/lidar/packages/ouster
 	url = https://github.com/CPFL/ouster
 	branch = autoware_branch
+[submodule "ros/src/simulation/gazebo_simulator/vehicle_sim"]
+	path = ros/src/simulation/gazebo_simulator/vehicle_sim
+	url = https://github.com/tier4/vehicle_sim.git
